@@ -2,9 +2,16 @@ export default class Paint {
   constructor(template, place) {
     this.template = template;
     this.place = place;
+    this.isMobile = false;
     this.drawing;
   }
   _createPaint() {
+    let width = window.innerWidth;
+    if (width < 700) {
+      this.isMobile = true;
+    } else {
+      this.isMobile = false;
+    }
     this.clone = this.template.content.cloneNode(true);
     this.canvas = document.createElement("canvas");
     this.canvas.width = 1000;
@@ -21,6 +28,13 @@ export default class Paint {
     this.canvas.addEventListener("mouseup", this._stopDrawing);
     this.circle.addEventListener("mouseout", (e) => this._draw(e));
 
+    this.circle.addEventListener("touchmove", (e) => this._draw(e));
+    this.circle.addEventListener("touchstart", (e) => this._startDrawing(e));
+    this.circle.addEventListener("touchout", (e) => this._draw(e));
+    this.circle.addEventListener("touchend", () => this._stopDrawing());
+    this.canvas.addEventListener("touchend", this._stopDrawing);
+    this.circle.addEventListener("touchout", (e) => this._draw(e));
+
     return this.clone;
   }
   renderPaint() {
@@ -30,40 +44,48 @@ export default class Paint {
   }
   _draw(e) {
     e.preventDefault();
-    e.stopPropagation();
     if (!this.drawing) {
       return;
     } else {
-      let x = e.clientX - this.canvas.offsetLeft;
-      let y = e.clientY - this.canvas.offsetTop;
-      let cords = this.pen.getBoundingClientRect();
+      if (this.isMobile) {
+        this.x = e.touches[0].clientX - this.canvas.offsetLeft;
+        this.y = e.touches[0].clientY - this.canvas.offsetTop;
+      } else {
+        this.x = e.clientX - this.canvas.offsetLeft;
+        this.y = e.clientY - this.canvas.offsetTop;
+      }
       let circleCords = this.circle.getBoundingClientRect();
       let lineCords = this.line.getBoundingClientRect();
-      console.log(cords);
-      this.pen.style.left = x - circleCords.width / 3 + "px";
-      this.pen.style.top = y - circleCords.height / 3 + "px";
+      console.log(this.x, this.y);
+      this.pen.style.left = this.x - circleCords.width / 3 + "px";
+      this.pen.style.top = this.y - circleCords.height / 3 + "px";
 
       this.ctx.lineTo(
-        x - circleCords.width / 3 - lineCords.width / 3,
-        y + circleCords.height / 3 + lineCords.height
+        this.x - circleCords.width / 3 - lineCords.width / 3,
+        this.y + circleCords.height / 3 + lineCords.height
       );
       this.ctx.stroke();
       this.ctx.beginPath();
       this.ctx.moveTo(
-        x - circleCords.width / 3 - lineCords.width / 3,
-        y + circleCords.height / 3 + lineCords.height
+        this.x - circleCords.width / 3 - lineCords.width / 3,
+        this.y + circleCords.height / 3 + lineCords.height
       );
     }
   }
   _startDrawing(e) {
-    let x = e.clientX - this.canvas.offsetLeft;
-    let y = e.clientY - this.canvas.offsetTop;
+    if (this.isMobile) {
+      this.x = e.touches[0].clientX - this.canvas.offsetLeft;
+      this.y = e.touches[0].clientY - this.canvas.offsetTop;
+    } else {
+      this.x = e.clientX - this.canvas.offsetLeft;
+      this.y = e.clientY - this.canvas.offsetTop;
+    }
     let circleCords = this.circle.getBoundingClientRect();
 
     this.drawing = true;
 
-    this.pen.style.left = x - circleCords.width / 3 + "px";
-    this.pen.style.top = y - circleCords.height / 3 + "px";
+    this.pen.style.left = this.x - circleCords.width / 3 + "px";
+    this.pen.style.top = this.y - circleCords.height / 3 + "px";
   }
   _stopDrawing() {
     this.drawing = false;
